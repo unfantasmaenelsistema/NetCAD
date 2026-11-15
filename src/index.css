@@ -65,3 +65,61 @@
     animation: none;
   }
 }
+
+/* ---------- Móvil y tabletas estrechas: el plano primero, paletas debajo ---------- */
+@media (max-width: 767px) {
+  #netcad-app {
+    height: auto;
+    min-height: 100dvh;
+    width: 100%;
+    overflow: visible;
+  }
+
+  #netcad-header {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    overflow: visible;
+  }
+
+  #netcad-header div.flex {
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  #netcad-workspace {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  #netcad-canvas {
+    order: -1;
+    flex: none;
+    height: 72vh;
+    min-height: 420px;
+  }
+
+  #netcad-toolbar {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+    overflow: visible;
+  }
+
+  #netcad-toolbar div.flex {
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  #netcad-palette,
+  #netcad-properties {
+    width: 100%;
+    max-height: none;
+    border-left: 0;
+    border-right: 0;
+    border-top: 1px solid #1e293b;
+  }
+}

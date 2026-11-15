@@ -1,6 +1,0 @@
-{
-  "name": "NetCAD — Simulador de Cableado Estructurado",
-  "description": "Simulador educativo interactivo estilo AutoCAD/Visio para diseño de planos de cableado estructurado (Racks MDF/IDF, puestos de trabajo, rosetas RJ45, canaletas y puntos de consolidación) listo para navegador y GitHub Pages.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

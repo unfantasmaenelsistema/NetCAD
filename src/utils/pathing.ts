@@ -448,6 +448,70 @@ export function runNetworkAudit(
     }
   }
 
+  // Enlaces horizontales con Punto de Consolidación (CP): TIA-568 limita a 90 m el enlace
+  // permanente completo (TR → CP → TO), no cada tramo por separado, y pide el CP a ≥ 15 m del TR.
+  const isRack = (e?: CanvasElement) => e?.type === 'rack_mdf' || e?.type === 'rack_idf';
+  const permanentLengthOf = (c: CableLink): number => {
+    const from = elementMap.get(c.fromId);
+    const to = elementMap.get(c.toId);
+    return from && to ? evaluateCableTia568(c, from, to).permanentLinkM : 0;
+  };
+  for (const cp of elements.filter((e) => e.type === 'consolidation_point')) {
+    const copper = cables.filter(
+      (c) => (c.fromId === cp.id || c.toId === cp.id) && !(CABLE_SPECS[c.category]?.isFiber)
+    );
+    const otherEnd = (c: CableLink) => elementMap.get(c.fromId === cp.id ? c.toId : c.fromId);
+    const feeds = copper.filter((c) => isRack(otherEnd(c)));
+    const drops = copper.filter((c) => {
+      const end = otherEnd(c);
+      return end && !isRack(end) && end.type !== 'consolidation_point';
+    });
+
+    for (const feed of feeds) {
+      const rack = otherEnd(feed)!;
+      const feedM = permanentLengthOf(feed);
+
+      if (feedM < 15) {
+        issues.push({
+          id: `${feed.id}-cp-15`,
+          targetType: 'cable',
+          targetId: feed.id,
+          targetLabel: `${rack.code} → ${cp.code}`,
+          severity: 'warning',
+          ruleCode: 'TIA-568-CP-15',
+          title: 'Punto de Consolidación a menos de 15 m del cuarto de telecomunicaciones',
+          description: `El tramo ${rack.code} → ${cp.code} mide ${feedM.toFixed(
+            2
+          )} m. TIA-568 sitúa el CP al menos a 15 m del TR para limitar la diafonía y las pérdidas de retorno de conexiones muy próximas.`,
+          recommendation: `Aleja ${cp.code} del rack o termina los puestos directamente en el patch panel de ${rack.code}.`,
+        });
+      }
+
+      for (const drop of drops) {
+        const end = otherEnd(drop)!;
+        const totalM = Number((feedM + permanentLengthOf(drop)).toFixed(2));
+        if (totalM > 90) {
+          issues.push({
+            id: `${feed.id}-${drop.id}-cp-perm-90`,
+            targetType: 'cable',
+            targetId: drop.id,
+            targetLabel: `${rack.code} → ${cp.code} → ${end.code}`,
+            severity: 'error',
+            ruleCode: 'TIA-568-PERM-90',
+            title: '¡Violación de Norma: Enlace Permanente > 90m!',
+            description: `El enlace horizontal ${rack.code} → ${cp.code} → ${end.code} suma ${totalM.toFixed(
+              2
+            )} m (${feedM.toFixed(2)} m hasta el CP + ${(totalM - feedM).toFixed(
+              2
+            )} m hasta la toma). El Punto de Consolidación forma parte del enlace permanente: el límite de 90 m se aplica al total.`,
+            recommendation:
+              'Acorta la ruta, acerca el CP a la zona de trabajo o instala un Rack IDF más próximo a los puestos.',
+          });
+        }
+      }
+    }
+  }
+
   // Topological checks
   const racks = elements.filter(
     (e) => e.type === 'rack_mdf' || e.type === 'rack_idf'

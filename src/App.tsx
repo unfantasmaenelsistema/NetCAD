@@ -702,7 +702,7 @@ export default function App() {
   );
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
+    <div id="netcad-app" className="h-screen w-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
       <HeaderBar
         activeScenarioId={activeScenarioId}
         onSelectScenario={handleSelectScenario}
@@ -744,7 +744,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      <div id="netcad-workspace" className="flex-1 flex min-h-0 overflow-hidden">
         <PaletteSidebar onQuickAdd={handleQuickAdd} />
 
         <FloorPlanCanvas

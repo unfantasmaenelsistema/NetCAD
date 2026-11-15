@@ -103,6 +103,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   return (
     <aside
+      id="netcad-properties"
       aria-label="Propiedades y Métricas"
       className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0 z-10"
     >

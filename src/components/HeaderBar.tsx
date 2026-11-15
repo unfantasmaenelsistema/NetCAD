@@ -54,7 +54,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   };
 
   return (
-    <header className="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between gap-4 shrink-0 z-20 overflow-x-auto">
+    <header id="netcad-header" className="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between gap-4 shrink-0 z-20 overflow-x-auto">
       {/* Zone 1: Brand Logo & Author Link */}
       <div className="flex items-center gap-3 min-w-0 shrink-0">
         <a
@@ -67,7 +67,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           <div className="w-9 h-9 rounded-md bg-white flex items-center justify-center p-1 border border-slate-700 shrink-0 overflow-hidden">
             {!logoError ? (
               <img
-                src="./assets/aistudio/icono_81a3db5b.png"
+                src="./assets/logo.png"
                 alt="Logo Un Fantasma en el Sistema"
                 referrerPolicy="no-referrer"
                 onError={() => setLogoError(true)}

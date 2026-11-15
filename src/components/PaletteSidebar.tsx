@@ -49,6 +49,7 @@ export const PaletteSidebar: React.FC<PaletteSidebarProps> = ({ onQuickAdd }) =>
 
   return (
     <aside
+      id="netcad-palette"
       aria-label="Paleta de Elementos"
       className="w-72 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 select-none z-10"
     >
