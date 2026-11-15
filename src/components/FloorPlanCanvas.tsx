@@ -798,9 +798,9 @@ export const FloorPlanCanvas: React.FC<FloorPlanCanvasProps> = ({
   }, [elements, trayPaths]);
 
   return (
-    <main className="flex-1 relative flex flex-col bg-[#F3F5F8] overflow-hidden select-none">
+    <main id="netcad-canvas" className="flex-1 relative flex flex-col bg-[#F3F5F8] overflow-hidden select-none">
       {/* Top CAD Toolbar */}
-      <div className="bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-3 py-2 flex items-center justify-between gap-2.5 z-10 shrink-0 overflow-x-auto">
+      <div id="netcad-toolbar" className="bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-3 py-2 flex items-center justify-between gap-2.5 z-10 shrink-0 overflow-x-auto">
         {/* Tool Mode Switcher */}
         <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-md border border-slate-800 shrink-0">
           <button

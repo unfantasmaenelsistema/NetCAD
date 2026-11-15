@@ -35,6 +35,38 @@ export interface ScenarioDefinition {
   ) => ScenarioEvaluation;
 }
 
+/**
+ * ¿Llega el puesto a un rack siguiendo los cables? Se puede pasar por rosetas, puntos de
+ * consolidación y racks, pero no a través de otros PCs (un PC no es un distribuidor).
+ */
+function reachesRack(
+  pcId: string,
+  elements: CanvasElement[],
+  cables: CableLink[],
+  acceptRack: (rack: CanvasElement) => boolean = () => true
+): boolean {
+  const byId = new Map(elements.map((e) => [e.id, e]));
+  const seen = new Set<string>([pcId]);
+  const queue = [pcId];
+  while (queue.length) {
+    const current = queue.shift()!;
+    for (const c of cables) {
+      if (c.fromId !== current && c.toId !== current) continue;
+      const nextId = c.fromId === current ? c.toId : c.fromId;
+      if (seen.has(nextId)) continue;
+      seen.add(nextId);
+      const next = byId.get(nextId);
+      if (!next) continue;
+      if (next.type === 'rack_mdf' || next.type === 'rack_idf') {
+        if (acceptRack(next)) return true;
+        continue;
+      }
+      if (next.type === 'outlet' || next.type === 'consolidation_point') queue.push(nextId);
+    }
+  }
+  return false;
+}
+
 export const SCENARIOS: ScenarioDefinition[] = [
   {
     id: 'demo',
@@ -154,7 +186,7 @@ export const SCENARIOS: ScenarioDefinition[] = [
     evaluate: (elements, cables, audit, bom) => {
       const pcs = elements.filter((e) => e.type === 'workstation');
       const connectedPcs = pcs.filter((pc) =>
-        cables.some((c) => c.fromId === pc.id || c.toId === pc.id)
+        reachesRack(pc.id, elements, cables, (rack) => rack.type === 'rack_mdf')
       ).length;
       const hasEnoughPcs = connectedPcs >= 5;
       const noErrors = audit.errorCount === 0 && audit.warningCount === 0;
@@ -164,7 +196,7 @@ export const SCENARIOS: ScenarioDefinition[] = [
         passed,
         flag: passed ? 'CTF{5PC_BUDG3T_0K}' : null,
         checklist: [
-          { label: `5 puestos conectados (${connectedPcs}/5)`, ok: hasEnoughPcs },
+          { label: `5 puestos conectados al Rack MDF (${connectedPcs}/5)`, ok: hasEnoughPcs },
           { label: '0 fallos ni advertencias TIA-568', ok: noErrors },
           {
             label: `Presupuesto base ≤ 1.000 € (${bom.subtotalMaterial.toFixed(0)} €)`,
@@ -359,10 +391,7 @@ export const SCENARIOS: ScenarioDefinition[] = [
     evaluate: (elements, cables, audit) => {
       const pcs = elements.filter((e) => e.type === 'workstation');
       const allPcsConnected =
-        pcs.length >= 3 &&
-        pcs.every((pc) =>
-          cables.some((c) => c.fromId === pc.id || c.toId === pc.id)
-        );
+        pcs.length >= 3 && pcs.every((pc) => reachesRack(pc.id, elements, cables));
       const noErrors = audit.errorCount === 0;
       const noWarnings = audit.warningCount === 0;
       const passed = allPcsConnected && noErrors && noWarnings;
@@ -372,7 +401,7 @@ export const SCENARIOS: ScenarioDefinition[] = [
         checklist: [
           { label: 'Corregir enlace > 90 m (Enlace Permanente)', ok: noErrors },
           { label: 'Resolver incompatibilidad Cat5e a 10 Gbps', ok: noErrors && noWarnings },
-          { label: 'Todos los puestos operativos', ok: allPcsConnected },
+          { label: 'Todos los puestos llegan al rack (por su roseta)', ok: allPcsConnected },
         ],
       };
     },
@@ -503,12 +532,22 @@ export const SCENARIOS: ScenarioDefinition[] = [
     ],
     evaluate: (elements, cables, audit) => {
       const hasIdf = elements.some((e) => e.type === 'rack_idf');
-      const hasFiberBackbone = cables.some((c) => c.category === 'OM3_OM4');
+      const byId = new Map(elements.map((e) => [e.id, e]));
+      // Troncal: fibra que une el MDF con un IDF (no vale cualquier tramo de fibra)
+      const backboneIdfIds = new Set(
+        cables
+          .filter((c) => c.category === 'OM3_OM4')
+          .map((c) => [byId.get(c.fromId), byId.get(c.toId)])
+          .filter(([a, b]) => a && b && ((a.type === 'rack_mdf' && b.type === 'rack_idf') || (a.type === 'rack_idf' && b.type === 'rack_mdf')))
+          .map(([a, b]) => (a!.type === 'rack_idf' ? a!.id : b!.id))
+      );
+      const hasFiberBackbone = backboneIdfIds.size > 0;
       const pcs = elements.filter((e) => e.type === 'workstation');
+      // Cada puesto debe llegar al MDF o a un IDF enlazado por el troncal de fibra
       const allPcsWired =
         pcs.length >= 4 &&
         pcs.every((pc) =>
-          cables.some((c) => c.fromId === pc.id || c.toId === pc.id)
+          reachesRack(pc.id, elements, cables, (rack) => rack.type === 'rack_mdf' || backboneIdfIds.has(rack.id))
         );
       const noErrors = audit.errorCount === 0 && audit.warningCount === 0;
       const passed = hasIdf && hasFiberBackbone && allPcsWired && noErrors;
@@ -517,8 +556,8 @@ export const SCENARIOS: ScenarioDefinition[] = [
         flag: passed ? 'CTF{IDF_B4CKB0N3_10G}' : null,
         checklist: [
           { label: 'Instalar un Rack IDF en Ala Este', ok: hasIdf },
-          { label: 'Enlace troncal en Fibra Óptica (OM3/OM4)', ok: hasFiberBackbone },
-          { label: 'Conectar todos los puestos (4/4)', ok: allPcsWired },
+          { label: 'Enlace troncal MDF ↔ IDF en Fibra Óptica (OM3/OM4)', ok: hasFiberBackbone },
+          { label: 'Todos los puestos llegan al MDF o al IDF (4/4)', ok: allPcsWired },
           { label: '0 fallos ni advertencias TIA-568', ok: noErrors },
         ],
       };
