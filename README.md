@@ -157,6 +157,7 @@ El proyecto usa `base: './'` en `vite.config.ts` y el flujo `.github/workflows/d
 - **Versión móvil**: cabecera y barra de herramientas se reparten en varias filas y el plano queda arriba, sin desbordes.
 - **Limpieza**: fuera las dependencias y ficheros que no se usaban, y las capturas son reales (PNG).
 - Corregidos en este README la flag y el presupuesto del Escenario 1, y las URL de ejemplo.
+- **Escenario 2 sin atajo**: el desvío perimetral de `TO-03` medía 82,5 m y no saltaba la regla de los 90 m, así que bastaba con corregir el Cat5e. Ahora mide 92,5 m (canal 97,5 m) y cada punto de la lista de comprobación se marca con su propio fallo.
 
 ---
 

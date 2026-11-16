@@ -342,7 +342,8 @@ export const SCENARIOS: ScenarioDefinition[] = [
         waypoints: [{ x: 180, y: 280 }, { x: 560, y: 280 }],
         snappedToTrayIds: ['s2-tray-main'],
       },
-      // Trap 2: Hidden 96m detour loop around perimeter (> 90m Permanent Link!)
+      // Trap 2: desvío perimetral oculto de 92,5 m (> 90 m de enlace permanente; canal 97,5 m)
+      // 4 + 48 + 7,5 + 33 m = (2100 - 180 + 300 + 2100 - 780) px / 40 px/m
       {
         id: 's2-c3',
         fromId: 's2-mdf',
@@ -353,8 +354,8 @@ export const SCENARIOS: ScenarioDefinition[] = [
         patchCordTrM: 2,
         waypoints: [
           { x: 180, y: 40 },
-          { x: 1900, y: 40 },
-          { x: 1900, y: 340 },
+          { x: 2100, y: 40 },
+          { x: 2100, y: 340 },
         ],
       },
       {
@@ -394,14 +395,19 @@ export const SCENARIOS: ScenarioDefinition[] = [
         pcs.length >= 3 && pcs.every((pc) => reachesRack(pc.id, elements, cables));
       const noErrors = audit.errorCount === 0;
       const noWarnings = audit.warningCount === 0;
+      // Cada punto de la lista depende de su propio fallo, para que el alumno vea cuál le falta
+      const hasRule = (...codes: string[]) => audit.issues.some((i) => codes.includes(i.ruleCode));
+      const lengthFixed = !hasRule('TIA-568-PERM-90', 'TIA-568-CHAN-100');
+      const categoryFixed = !hasRule('IEEE-802.3an-CAT5E', 'TIA-TSB155-CAT6-55');
       const passed = allPcsConnected && noErrors && noWarnings;
       return {
         passed,
         flag: passed ? 'CTF{TIA568_RUL3S}' : null,
         checklist: [
-          { label: 'Corregir enlace > 90 m (Enlace Permanente)', ok: noErrors },
-          { label: 'Resolver incompatibilidad Cat5e a 10 Gbps', ok: noErrors && noWarnings },
+          { label: 'Corregir enlace > 90 m (Enlace Permanente)', ok: lengthFixed },
+          { label: 'Resolver incompatibilidad Cat5e a 10 Gbps', ok: categoryFixed },
           { label: 'Todos los puestos llegan al rack (por su roseta)', ok: allPcsConnected },
+          { label: '0 fallos ni advertencias TIA-568', ok: noErrors && noWarnings },
         ],
       };
     },
